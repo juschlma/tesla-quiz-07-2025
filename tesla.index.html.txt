@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Tesla Gemeinschaftsschule Berlin – Quiz</title>
+<style>
+body {
+font-family: Arial, sans-serif;
+max-width: 700px;
+margin: 2rem auto;
+padding: 1rem;
+background: #f9f9f9;
+color: #222;
+}
+h1 {
+color: #0072ce;
+text-align: center;
+}
+.question {
+background: white;
+border-radius: 8px;
+padding: 1rem;
+margin-bottom: 1rem;
+box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+.question h3 {
+margin-top: 0;
+}
+label {
+display: block;
+margin: 0.3rem 0;
+cursor: pointer;
+}
+button {
+background-color: #0072ce;
+border: none;
+color: white;
+padding: 0.7rem 1.2rem;
+font-size: 1rem;
+border-radius: 6px;
+cursor: pointer;
+margin-top: 1rem;
+}
+button:hover {
+background-color: #005a9e;
+}
+#result {
+font-weight: bold;
+font-size: 1.3rem;
+margin-top: 1rem;
+text-align: center;
+}
+.feedback {
+margin-top: 0.3rem;
+font-size: 0.9rem;
+}
+.correct {
+color: green;
+}
+.incorrect {
+color: red;
+}
+</style>
+</head>
+<body>
+
+<h1>Tesla Gemeinschaftsschule Berlin – Quiz</h1>
+<form id="quizForm">
+</form>
+
+<div style="text-align:center;">
+<button id="submitBtn">Auswerten</button>
+<button id="resetBtn" type="button">Zurücksetzen</button>
+</div>
+
+<div id="result" aria-live="polite"></div>
+
+<script>
+const quizData = [
+{ q: "In welchem Berliner Bezirk liegt die Tesla Gemeinschaftsschule?", type: "single", options: ["Mitte","Pankow","Friedrichshain","Neukölln"], correct: 1 },
+{ q: "Welches pädagogische Profil hat die Schule?", type: "single", options: ["Schwerpunkt Kunst & Musik","Schwerpunkt Sport & Gesundheit","Schwerpunkt Natur, Technik, Umwelt & Nachhaltigkeit","Schwerpunkt Sprachen & Literatur"], correct: 2 },
+{ q: "Auf welchen Physiker und Erfinder bezieht sich der Schulname?", type: "single", options: ["Albert Einstein","Thomas Edison","Nikola Tesla","Michael Faraday"], correct: 2 },
+{ q: "Welche Fremdsprachen können in der zweiten Fremdsprache gewählt werden? (Englisch ist 1. Fremdsprache)", type: "single", options: ["Französisch oder Latein","Französisch oder Spanisch","Spanisch oder Chinesisch","Russisch oder Arabisch"], correct: 1 },
+{ q: "Wie lange dauert der Unterrichtstag montags bis donnerstags (gebundener Ganztag)?", type: "single", options: ["8–13 Uhr","8–15 Uhr","8–16 Uhr","9–17 Uhr"], correct: 2 },
+{ q: "Welche Jahrgänge werden an der Tesla Schule unterrichtet?", type: "single", options: ["1–6","5–10","1–10","7–13"], correct: 2 },
+{ q: "Wie heißt das pädagogische Konzept, das an der Schule stark betont wird?", type: "single", options: ["Frontalunterricht","Inklusion und individuelles Lernen","Projektunterricht nur in Naturwissenschaften","Montessori"], correct: 1 },
+{ q: "Was ist eine Besonderheit des geplanten/angestrebten Campus-Neubaus der Schule?", type: "single", options: ["Glasdach über dem Schulhof","Klassenräume mit Holzvertäfelung","Offene Lernlandschaften / flexible Lernbereiche","Physik-Forschungslabor auf dem Dach"], correct: 2 },
+{ q: "Welche AGs bietet die Tesla Gemeinschaftsschule an? (Mehrfachantwort möglich)", type: "multi", options: ["Robotik","Theater","Schulband","Fußball"], correct: [0,1,2,3] },
+{ q: "Welche digitale Ausstattung steht den Schüler*innen zur Verfügung (u.a. für Distanz- & Hybridlernen)?", type: "single", options: ["Nur Whiteboards","iPads / Tablets im Unterricht","Computerraum mit Windows 95","Nur eigene Smartphones"], correct: 1 },
+{ q: "Womit beschäftigte sich ein Erasmus-Projekt der Schule (Brüssel-Austausch)?", type: "single", options: ["Biologische Vielfalt in der Schulumgebung","Europäische Technikgeschichte","Nachhaltigkeit und Umweltbildung / Stadtentwicklung","Migration und Stadtentwicklung"], correct: 2 },
+{ q: "Wie ist das Mittagessen an der Tesla Schule organisiert?", type: "single", options: ["Nur Lunchpakete von zu Hause","Wahlweise warmes Mittagessen in der Mensa","Lieferservice von Restaurants","Nur Automaten"], correct: 1 }
+];
+
+const formEl = document.getElementById('quizForm');
+
+quizData.forEach((item, idx) => {
+const fieldset = document.createElement('fieldset');
+fieldset.classList.add('question');
+fieldset.id = 'q' + idx;
+
+const legend = document.createElement('h3');
+legend.textContent = `${idx+1}. ${item.q}`;
+fieldset.appendChild(legend);
+
+if (item.type === 'multi') {
+const hint = document.createElement('p');
+hint.textContent = "Mehrfachantwort möglich";
+hint.style.fontSize = '0.85rem';
+hint.style.color = '#555';
+fieldset.appendChild(hint);
+}
+
+item.options.forEach((opt, optIdx) => {
+const label = document.createElement('label');
+const input = document.createElement('input');
+input.type = item.type === 'multi' ? 'checkbox' : 'radio';
+input.name = 'q' + idx;
+input.value = optIdx;
+label.appendChild(input);
+label.append(' ' + opt);
+fieldset.appendChild(label);
+});
+
+formEl.appendChild(fieldset);
+});
+
+const submitBtn = document.getElementById('submitBtn');
+const resetBtn = document.getElementById('resetBtn');
+const resultEl = document.getElementById('result');
+
+submitBtn.addEventListener('click', () => {
+let score = 0;
+quizData.forEach((item, idx) => {
+const inputs = document.querySelectorAll(`input[name="q${idx}"]`);
+let userAnswers = [];
+inputs.forEach(i => { if(i.checked) userAnswers.push(parseInt(i.value)); });
+
+let correct = false;
+if (item.type === 'single') {
+correct = (userAnswers.length === 1 && userAnswers[0] === item.correct);
+} else {
+userAnswers.sort();
+let sortedCorrect = [...item.correct].sort();
+correct = userAnswers.length === sortedCorrect.length && userAnswers.every((v,i) => v === sortedCorrect[i]);
+}
+
+if (correct) score++;
+
+// Feedback coloring
+inputs.forEach(i => {
+i.parentElement.style.color = '';
+});
+if (!correct) {
+inputs.forEach(i => {
+if (item.type === 'single') {
+if (parseInt(i.value) === item.correct) {
+i.parentElement.style.color = 'green';
+} else if (i.checked) {
+i.parentElement.style.color = 'red';
+}
+} else {
+if (item.correct.includes(parseInt(i.value))) {
+i.parentElement.style.color = 'green';
+} else if (i.checked) {
+i.parentElement.style.color = 'red';
+}
+}
+});
+} else {
+// Mark all green if correct
+inputs.forEach(i => {
+i.parentElement.style.color = 'green';
+});
+}
+});
+resultEl.textContent = `Du hast ${score} von ${quizData.length} Fragen richtig beantwortet.`;
+window.scrollTo({top: 0, behavior: 'smooth'});
+});
+
+resetBtn.addEventListener('click', () => {
+document.querySelectorAll('input').forEach(i => {
+i.checked = false;
+i.parentElement.style.color = '';
+});
+resultEl.textContent = '';
+});
+</script>
+
+</body>
+</html>
